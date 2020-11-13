@@ -1,5 +1,6 @@
 {
   "description": "项目配置文件",
+  "miniprogramRoot": "musicPlayer/",
   "packOptions": {
     "ignore": []
   },
@@ -11,18 +12,26 @@
     "newFeature": true,
     "coverView": true,
     "autoAudits": false,
+    "scopeDataCheck": false,
     "checkInvalidKey": true,
-    "checkSiteMap": true,
+    "checkSiteMap": false,
     "uploadWithSourceMap": true,
+    "useMultiFrameRuntime": false,
+    "useApiHook": true,
     "babelSetting": {
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "useIsolateContext": true,
+    "useCompilerModule": true,
+    "userConfirmedUseCompilerModuleSwitch": false,
+    "packNpmManually": false,
+    "packNpmRelationList": []
   },
   "compileType": "miniprogram",
-  "libVersion": "2.0.4",
-  "appid": "wx5ff919f19de1590a",
+  "libVersion": "2.13.0",
+  "appid": "wxa2ad0e62f6f3edd2",
   "projectname": "miniprogram-test-1",
   "debugOptions": {
     "hidedInDevtools": []
@@ -30,6 +39,8 @@
   "isGameTourist": false,
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
+  "cloudfunctionTemplateRoot": "cloudfunctionTemplate",
+  "cloudfunctionRoot": "functions/",
   "condition": {
     "search": {
       "current": -1,

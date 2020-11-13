@@ -1,0 +1,12 @@
+<view class='audioPlayer'>
+    <view class='audioControls'>
+      <view class='flex'>
+        <view class='slider'>
+          <slider bindchange='sliderChange' activeColor='red' block-size="12" value='{{audioTime}}' />
+        </view>
+        <view class='time'>
+          {{showTime1}}/{{showTime2}}
+        </view>
+      </view>
+    </view>
+</view>
