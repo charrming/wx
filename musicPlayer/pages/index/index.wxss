@@ -150,6 +150,7 @@
 }
 .comment-list-title .iconfont {
   float: right;
+  margin-left: 20rpx;
   /* color: cyan; */
   font-size: 38rpx;
   display: table-footer-group;
@@ -205,6 +206,7 @@
 }
 .comment-view .comment-view-title {
   text-align: center;
+  font-size: 50rpx;
 }
 .comment-view textarea {
   border-radius: 4px; 
@@ -327,4 +329,13 @@ flex-flow: column;
 }
 .mode-now-green {
   color: #00ff43;
+}
+.upload-view-input {
+  padding: 21rpx;
+  border: 2px solid white;
+  border-radius: 4px;
+  margin: 15rpx;
+}
+.place-holder {
+  color:#bbbbbb;
 }

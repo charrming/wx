@@ -9,6 +9,7 @@ const music = wx.getBackgroundAudioManager()
 const util = require('../../utils/util.js');
 Page({
   data: {
+    
     userInfo: {},
     hasUserInfo: false,
     canIUse: wx.canIUse('button.open-type.getUserInfo'),
@@ -21,6 +22,7 @@ Page({
     comment_list:[],
     musicIsPause: false,
     comment_view: false,
+    upload_view: false,
     maskShow: false,
     comment: '',
     play_mode: 1,//1:顺序播放;2:单曲循环;3:随机播放;4:我的列表
@@ -28,7 +30,15 @@ Page({
     my_list_show: false,
     my_list: [],
 
-    count: 1,
+    count: 0,
+
+    file: '',
+    upload_title: '',
+    upload_singer: '',
+    upload_button_name: '选择音乐',
+    upload_key: '',//上传权限
+    correct_key: '404',
+    
 
 
   },
@@ -44,6 +54,8 @@ Page({
     this.getMusic();
     //取评论列表
     this.getComment();
+    //取id
+    this.getId();
     //取用户信息
     this.getUserInfo();
     music.onEnded(() => {
@@ -139,6 +151,42 @@ Page({
       complete: res =>{
         this.setData({comment_list: res.result});
       }
+    })
+  },
+  //取id
+  getId: function() {
+    const db = wx.cloud.database()
+    db.collection('id').where({
+      '_id': 'music_id',
+    }).get({
+      success: res =>{
+        this.setData({max_id: res.data[0].num});
+        console.log(this.data.max_id);
+      },
+      fail: err =>{
+        wx.showToast({
+          title: err.errMsg,
+          icon: 'none',
+        })            
+      }                
+    })
+  },
+  //添加歌曲后更新MAX_ID
+  setId: function() {
+    const db = wx.cloud.database()
+    db.collection('id').doc('music_id').update({
+      data: {
+        'num': this.data.max_id+1,
+      },
+      success: res =>{
+        this.getId();
+      },
+      fail: err =>{
+        wx.showToast({
+          title: err.errMsg,
+          icon: 'none',
+        })            
+      }                
     })
   },
   //取用户信息
@@ -406,11 +454,18 @@ Page({
     item.id = this.data.count;
     this.data.my_list.push(item);
     this.setData({'my_list': this.data.my_list,'count':this.data.count+1});
+    console.log(this.data.my_list);
+    console.log(this.data.count);
+    console.log(this.data.userInfo)
     wx.showToast({
       title: '加左啦~',
       icon:'success',
     });
   },
+  //保存我的歌单
+
+  //读取我的歌单
+
   //循环播放我的播放列表
   playMyList: function(){
     if(this.data.my_list.length){
@@ -436,38 +491,99 @@ Page({
     this.setData({my_list:this.data.my_list});
   },
   //上传音乐
-  uploadfile:function(e) {
+  showUpload: function(){
+    this.setData({upload_view: true});
+  },  
+  hideUpload: function(){
+    this.setData({upload_view: false,file: '',upload_button_name:'选择音乐',upload_title: '',upload_singer: ''});
+  },  
+  sendUpload: function(){
+      var that = this;
+      if(!this.data.file||!this.data.upload_singer||!this.data.upload_title){
+        wx.showToast({
+          icon: 'none',
+          title: '填资料先啦',
+          duration: 2500,
+        });
+      }else{
+          //上传文件
+          const filePath = this.data.file;
+          const cloudPath = 'music/' + new Date().getTime()+'.mp3'; //云存储路径
+          this.setData({'maskShow':true});
+          console.log('正在上传');
+          wx.cloud.uploadFile({
+            cloudPath,
+            filePath,
+            success: resa => {
+              console.log(resa)
+              const db = wx.cloud.database()
+              //把文件名和文件在云存储的fileID存入filelist数据表中
+              db.collection('music').add({
+                data: {                 
+                  url: resa.fileID,
+                  singer: that.data.upload_singer,
+                  title: that.data.upload_title,
+                  id: this.data.max_id+1,
+                },
+                complete: res =>{
+                  this.setData({'maskShow':false});
+                },
+                success: res =>{
+                  this.hideUpload();
+                  this.getMusic();
+                  this.setId();
+                  wx.showToast({
+                    title: '掂',
+                    icon: 'success',
+                  })         
+                },
+                fail: err =>{
+                  wx.showToast({
+                    title: err.errMsg,
+                    icon: 'none',
+                  })            
+                }                
+              })    
+            },
+            fail: e => {
+              that.setData({'maskShow':false});
+              wx.showToast({
+                icon: 'none',
+                title: '上传失败',
+              })
+            },
+          })        
+      }
+
+  },
+  selectFile:function(e) {
+    var that = this;
     wx.chooseMessageFile({
       count: 1, //可选择最大文件数 （最多100）
-      type: 'all', //文件类型，all是全部文件类型
+      type: 'file', //文件类型，all是全部文件类型
       success(res) {
-        const filePath = res.tempFiles[0].path //文件本地临时路径
-        console.log(res)
-        // 上传文件
-        const cloudPath = 'music/' + filename //云存储路径
-        console.log(cloudPath)
-        wx.cloud.uploadFile({
-          cloudPath,
-          filePath,
-          success: resa => {
-            console.log(resa.fileID)
-            const db = wx.cloud.database()
-            //把文件名和文件在云存储的fileID存入filelist数据表中
-            db.collection('filelist').add({
-              data: {
-              filename: filename,
-              fileid: resa.fileID,
-              },
-            })    
-          },
-          fail: e => {
+        const file = res.tempFiles[0];
+        const filename = file.name;
+        const filePath = file.path; //文件本地临时路径
+        let temp = file.name.split('.');
+        const fileType = temp[temp.length-1];
+        if(fileType!='mp3'){
             wx.showToast({
               icon: 'none',
-              title: '上传失败',
-            })
-          },
-        })
+              title: '仅支持MP3',
+              duration: 2500,
+            });
+            that.setData({file:'',upload_button_name:'选择音乐'});
+            return false;  
+        }else{   
+          that.setData({file:filePath,upload_button_name:'OJBK'});
+        }
       }
     })
   },
+  setUpload: function(e){
+    let name = e.currentTarget.dataset.name;
+    let value = e.detail.value;
+    this.setData({[name]:value});
+  }
 })
